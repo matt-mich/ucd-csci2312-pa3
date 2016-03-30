@@ -17,6 +17,7 @@
 #include "KMeans.h"
 #include "Exceptions.h"
 
+
 using namespace Clustering;
 using namespace Testing;
 
@@ -24,9 +25,9 @@ using namespace Testing;
 
 
 
-
 // - - - - - - - - - - helper functions - - - - - - - - - -
 const Point point_in_and_out(const Point p) { return Point(p); }
+
 
 // - - - - - - - - - - local classes - - - - - - - - - -
 class ClusterCounts {
