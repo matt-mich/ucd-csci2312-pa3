@@ -4,8 +4,9 @@
 
 #include "Point.h"
 #include <cmath>
+#include <sstream>
 #include "Exceptions.h"
-
+#include <cstdio> // Needed for EOF
 namespace Clustering {
 
     unsigned int Point::__idGen = 0;
@@ -55,12 +56,16 @@ namespace Clustering {
             __id = other.__id;
             delete[] __values;
             __dim = other.getDims();
-            __values = other.__values;
+            __values = new double[__dim];
+            for(int i = 0; i < __dim; ++i){
+                __values[i] = other.__values[i];
+            }
         }
         return *this;
     }
     // Should automatically delete __values
     Point::~Point(){
+            delete []__values;
     }
 
     int Point::getId() const{
@@ -271,23 +276,32 @@ namespace Clustering {
 
     std::istream &operator>>(std::istream &is, Clustering::Point &p){
         unsigned int index = 0;
-        double temp;
-
-        while ((is.peek() != '\n') || (is.peek() != '\r')){
-            is >> temp;
+        double temp = 0;
+        char delim = ',';
+        std::string str;
+        std::stringstream s;
+        getline(is,str);
+        s.str(str);
+        while ( s.peek() != EOF /*(is.peek() != '\n') || (is.peek() != '\r') <-- OLD METHOD*/){
+            s >> temp;
             try{
                 p.setValue(index, temp);
             }catch(Clustering::OutOfBoundsEx &ex){
                 throw Clustering::DimensionalityMismatchEx(p.__dim,index);
             }
 
-            if((is.peek() == '\n') || (is.peek() == '\r') || (is.eof())){
+            //if((is.peek() == '\n') || (is.peek() == '\r') || (is.eof())){  <-- OLD METHOD
+            if(s.peek() == EOF){
+                if(index != p.__dim-1){
+                    throw Clustering::DimensionalityMismatchEx(p.__dim,index);
+                }
                 return is;
             }
-            is.ignore(100, POINT_VALUE_DELIM);
+            s.ignore(100, delim);
             index++;
         }
-        if(index != p.__dim){
+        index--;
+        if(index != p.__dim-1){
             throw Clustering::DimensionalityMismatchEx(p.__dim,index);
         }
         return is;

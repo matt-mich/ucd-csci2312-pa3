@@ -6,14 +6,12 @@
 #include "Cluster.h"
 #include <sstream>
 #include "Exceptions.h"
-//Included automatically by CLion after if got confused about something. Not sure what it does.
-#include <stdio.h>
-
+#include <cstdio>
 namespace Clustering {
 
     unsigned int Cluster::__idGenerator = 0;
 
-    // CENTROID
+    // C E N T R O I D
 
     Cluster::Centroid::Centroid(unsigned int d, const Cluster &c) : __p(d), __c(c){
         __valid = false;
@@ -227,8 +225,8 @@ namespace Clustering {
 
         while (temp->next != nullptr) {
             if(N->point < temp->point){
-                prev = N;
-                N->next = prev;
+                prev->next = N;
+                N->next = temp;
                 ++__size;
                 centroid.setValid(false);
                 return;
@@ -255,6 +253,8 @@ namespace Clustering {
                     --__size;
                 }
                 delete temp;
+                centroid.setValid(false);
+                return P1;
             } else {
                 int i = 0;
                 LNodePtr prev = temp;
@@ -266,8 +266,14 @@ namespace Clustering {
                             prev->next = nullptr;
                             delete temp;
                             __size--;
+                            centroid.setValid(false);
+                            return P1;
                         } else {
                             prev->next = temp->next;
+                            delete temp;
+                            __size--;
+                            centroid.setValid(false);
+                            return P1;
                         }
                     }
                     temp = temp->next;
@@ -454,15 +460,27 @@ namespace Clustering {
         std::getline(in, temp);
         std::stringstream s;
         s.str(temp);
-        Clustering::Point *test = new Clustering::Point(C1.__dimensionality);
-        while(!(in.eof())){
+        try{
+            Clustering::Point *test = new Clustering::Point(C1.__dimensionality);
+            s >> *test;
+            C1.add(*test);
+            delete test;
+        }catch(Clustering::DimensionalityMismatchEx &ex){
+            std::cerr << "Caught exception: " << ex << std::endl;
+            Clustering::Point::rewindIdGen();
+        }
+
+        while(in.peek() != EOF){
             try{
+                Clustering::Point *test = new Clustering::Point(C1.__dimensionality);
                 in >> *test;
                 C1.add(*test);
+                delete test;
             }catch(Clustering::DimensionalityMismatchEx &ex){
                 std::cerr << "Caught exception: " << ex << std::endl;
-                in.ignore(std::numeric_limits<int>::max(),'\n');
-            }
+                Clustering::Point::rewindIdGen();
+                 }
+
         }
 
         return in;
@@ -529,7 +547,6 @@ namespace Clustering {
                 for(unsigned int j = 0; j < __dimensionality; ++j){
                     pointArray[i]->setValue(j, std::numeric_limits<double>::max());
                 }
-
             }
         }
     }
@@ -539,8 +556,11 @@ namespace Clustering {
 
     }
     void Cluster::Move::perform(){
+        Point *p = new Point(__p);
         __from.remove(__p);
-        __to.add(__p);
+        __to.add(*p);
+        delete p;
+
     }
 }
 
